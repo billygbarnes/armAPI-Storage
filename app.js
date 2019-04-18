@@ -4,19 +4,56 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var azure = require('azure-storage');
 
-var tblKey = process.env.STKEY; 
+var KeyVault = require('azure-keyvault');
+var msRestAzure = require('ms-rest-azure');
+
+
+var tblKey; // = process.env.STKEY; 
 var tblSvc = process.env.STNAME; 'tmpstorageoil';
 
 var app            = express();
 
-// uses AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY, or AZURE_STORAGE_CONNECTION_STRING,
-// or specify on the TableService call.
- var tableSvc = azure.createTableService(tblSvc, tblKey);
- tableSvc.createTableIfNotExists('pocData', function(error, result, response){
-  if(!error){
-    // Table exists or created
-  }
+
+// Keyvault ============================
+
+function getKeyVaultCredentials(){
+    console.log("getKeyVaultCredentials");
+    return msRestAzure.loginWithAppServiceMSI({resource: 'https://vault.azure.net'});
+}
+
+function getKeyVaultSecret(credentials) {
+    console.log("getKeyVaultSecret");
+    var keyVaultClient = new KeyVault.KeyVaultClient(credentials);
+    return keyVaultClient.getSecret(vaultUri, 'livedataKey', "");
+}
+
+getKeyVaultCredentials().then(
+    getKeyVaultSecret
+).then(function (secret){
+    //console.log(`Your secret value is: ${secret.value}.`);
+    tblKey = secret.value;
+    
+    connectStorage();
+}).catch(function (err) {
+    throw (err);
 });
+// =====================================
+
+var tableSvc;
+
+function connectStorage(){
+
+    // uses AZURE_STORAGE_ACCOUNT, or AZURE_STORAGE_CONNECTION_STRING,
+  // or specify on the TableService call.
+  tableSvc = azure.createTableService(tblSvc, tblKey);
+  tableSvc.createTableIfNotExists('pocData', function(error, result, response){
+    if(!error){
+      // Table exists or created
+    }
+  });
+
+
+}
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))

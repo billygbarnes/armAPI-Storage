@@ -15,6 +15,7 @@ var app            = express();
 
 
 // Keyvault ============================
+var vaultUri = process.env.KVURI;
 
 function getKeyVaultCredentials(){
     console.log("getKeyVaultCredentials");
@@ -52,6 +53,12 @@ function connectStorage(){
     }
   });
 
+
+
+app.listen(process.env.PORT || port, () => {
+  console.log("==========================================");
+  console.log('We are live API on ' + port);
+});
 
 }
 

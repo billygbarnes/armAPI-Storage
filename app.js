@@ -153,7 +153,4 @@ app.get('/livedata', (req, res) => {
  });
 
 
-app.listen(process.env.PORT || port, () => {
-  console.log("==========================================");
-  console.log('We are live API on ' + port);
-});
+
